@@ -66,9 +66,9 @@ do_uninstall() {
 do_install() {
     install_build_deps
 
-    local tmpdir
-    tmpdir=$(mktemp -d)
-    trap 'rm -rf "$tmpdir"' EXIT
+    TMPDIR_CLEANUP=$(mktemp -d)
+    trap 'rm -rf "${TMPDIR_CLEANUP:-}"' EXIT INT TERM
+    local tmpdir="$TMPDIR_CLEANUP"
 
     echo ":: downloading source"
     curl -fsSL "$REPO/das-debounce.c" -o "$tmpdir/das-debounce.c"
