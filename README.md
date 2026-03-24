@@ -51,6 +51,8 @@ Same-direction events always pass through immediately. Only direction changes wi
 curl -fsSL https://raw.githubusercontent.com/DigitalCyberSoft/das-debounce/main/install.sh | sudo bash
 ```
 
+Requires root for installing the binary, systemd service, and udev rule.
+
 ## Install from Source
 
 ### Fedora
