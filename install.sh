@@ -68,17 +68,15 @@ do_install() {
 
     TMPDIR_CLEANUP=$(mktemp -d)
     trap 'rm -rf "${TMPDIR_CLEANUP:-}"' EXIT INT TERM
-    local tmpdir="$TMPDIR_CLEANUP"
-
     echo ":: downloading source"
-    curl -fsSL "$REPO/das-debounce.c" -o "$tmpdir/das-debounce.c"
+    curl -fsSL "$REPO/das-debounce.c" -o "$TMPDIR_CLEANUP/das-debounce.c"
 
     echo ":: compiling"
-    gcc -Wall -Wextra -O2 -o "$tmpdir/das-debounce" "$tmpdir/das-debounce.c" \
+    gcc -Wall -Wextra -O2 -o "$TMPDIR_CLEANUP/das-debounce" "$TMPDIR_CLEANUP/das-debounce.c" \
         $(pkg-config --cflags --libs libevdev)
 
     echo ":: installing binary"
-    install -Dm755 "$tmpdir/das-debounce" "$BINDIR/das-debounce"
+    install -Dm755 "$TMPDIR_CLEANUP/das-debounce" "$BINDIR/das-debounce"
 
     echo ":: installing systemd service"
     cat > "$UNITDIR/das-debounce.service" <<'UNIT'
