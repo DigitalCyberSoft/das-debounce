@@ -10,6 +10,7 @@ REPO="https://raw.githubusercontent.com/DigitalCyberSoft/das-debounce/main"
 BINDIR="/usr/local/bin"
 UNITDIR="/usr/lib/systemd/system"
 UDEVDIR="/usr/lib/udev/rules.d"
+TMPDIR_CLEANUP=""
 
 # --- helpers ---
 
