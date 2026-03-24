@@ -4,9 +4,36 @@ Fix the Das Keyboard 4 Professional volume knob on Linux.
 
 ## The Problem
 
-The volume knob's rotary encoder produces spurious direction reversals at high rotation speeds, alternating between volume-up and volume-down every 8-16ms. The keyboard firmware performs no debounce, causing erratic volume changes.
+The Das Keyboard 4 Professional's volume knob produces erratic, inconsistent volume changes on Linux. Turning the knob fast causes the volume to jump around or barely move at all.
 
-Additionally, Linux/X11 enables key auto-repeat on volume keycodes by default, generating phantom events between knob detents at lower speeds.
+There are two root causes:
+
+### 1. X11 auto-repeat on volume keycodes
+
+The knob sends `XF86AudioRaiseVolume` (keycode 123) and `XF86AudioLowerVolume` (keycode 122) as standard key events. X11 enables auto-repeat on these keycodes by default. Each knob detent fires a key press, then X11's repeat mechanism generates phantom events at ~25/sec before the release arrives 8ms later. At normal rotation speeds this causes volume to jump in unpredictable steps.
+
+You can fix this in isolation with `xset -r 122; xset -r 123`, but this only solves part of the problem and must be re-applied every login.
+
+### 2. Encoder bounce at high rotation speed
+
+At fast rotation speeds, the rotary encoder produces spurious direction reversals, alternating between volume-up and volume-down every 8-16ms. The keyboard firmware performs no debounce. Raw `evtest` captures show the encoder rapidly toggling direction even when spinning in only one direction:
+
+```
+424.548  KEY_VOLUMEUP
+424.564  KEY_VOLUMEDOWN   <-- bounce
+424.580  KEY_VOLUMEUP     <-- bounce
+424.596  KEY_VOLUMEDOWN   <-- bounce
+424.612  KEY_VOLUMEDOWN   <-- settles
+```
+
+The opposing events cancel each other out, so the volume goes nowhere during fast turns. There is no X11 or desktop-level fix for this. The bad data comes straight from the hardware.
+
+### What doesn't work
+
+- **Compressed air / contact cleaner** -- this is not a dirty encoder problem. Brand new units exhibit the same behavior. The encoder simply lacks firmware debounce.
+- **`xset -r 122; xset -r 123`** -- disabling auto-repeat fixes the low-speed stutter but does nothing about the high-speed direction bounce.
+- **Changing desktop volume step size** -- doesn't help when the events themselves alternate direction.
+- **Different USB port / hub** -- the bounce originates in the keyboard's encoder, not the USB transport.
 
 ## How It Works
 
@@ -16,7 +43,13 @@ Additionally, Linux/X11 enables key auto-repeat on volume keycodes by default, g
 2. Suppresses direction reversals arriving within a debounce window (default 100ms)
 3. Re-emits clean events via a virtual uinput device
 
-The exclusive grab also eliminates the X11 auto-repeat issue since the desktop only sees the virtual device.
+Same-direction events always pass through immediately. Only direction changes within the debounce window are suppressed. The exclusive grab also eliminates the X11 auto-repeat issue since the desktop only sees the virtual device.
+
+## Quick Install
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/DigitalCyberSoft/das-debounce/main/install.sh | sudo bash
+```
 
 ## Install from Source
 
@@ -68,6 +101,12 @@ sudo systemctl disable --now das-debounce
 sudo make uninstall
 sudo systemctl daemon-reload
 sudo udevadm control --reload-rules
+```
+
+Or if installed via `install.sh`:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/DigitalCyberSoft/das-debounce/main/install.sh | sudo bash -s -- --uninstall
 ```
 
 ## Configuration
