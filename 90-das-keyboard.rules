@@ -1,0 +1,2 @@
+# Restart das-debounce when Das Keyboard is plugged in
+ACTION=="add", SUBSYSTEM=="input", ATTRS{idVendor}=="24f0", ATTRS{idProduct}=="204a", TAG+="systemd", ENV{SYSTEMD_WANTS}="das-debounce.service"

@@ -1,0 +1,12 @@
+[Unit]
+Description=Das Keyboard volume knob debounce
+After=systemd-udevd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/das-debounce
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
